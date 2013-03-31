@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
 	package="com.onedialogproject.galapagosmapho"
-	android:versionCode="201303171"
-	android:versionName="1.0" >
+	android:versionCode="201303261"
+	android:versionName="1.1" >
 
 	<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -10,8 +10,12 @@
 	<uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 	<uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
 	<uses-permission android:name="android.permission.VIBRATE" />
+	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+	<uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
 
-	<uses-sdk android:minSdkVersion="7" />
+	<uses-sdk
+		android:minSdkVersion="7"
+		android:targetSdkVersion="7" />
 
 	<application
 		android:allowBackup="true"
@@ -37,7 +41,7 @@
 		</receiver>
 
 		<service android:name="com.onedialogproject.galapagosmapho.ResidentService" />
-		<service android:name="com.onedialogproject.galapagosmapho.TimerService" />
+
 		<service
 			android:name="com.onedialogproject.galapagosmapho.NotifyAreaController"
 			android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE" >

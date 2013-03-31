@@ -1,8 +1,5 @@
 package com.onedialogproject.galapagosmapho;
 
-import com.onedialogproject.galapagosmapho.R;
-import com.onedialogproject.galapagosmapho.DebugTools.Pattern;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -14,12 +11,18 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
+
+import com.onedialogproject.galapagosmapho.DebugTools.Pattern;
 
 public class Setting extends Activity {
 
+    private static final boolean DEBUG = false;
     private static final int SHOW_LOG = 1;
     private static final int SHOW_FUNCTION = 2;
+    private static final int CONFIRM_CLEAR_LOG = 3;
 
     private int nNowDialog = SHOW_FUNCTION;
 
@@ -27,11 +30,16 @@ public class Setting extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         final Context context = this;
+
         DebugTools.notify(this, Pattern.SCREEN_ON);
-        Utils.addLog(context, "設定アプリ起動");
-        if (Prefs.getMainSetting(this)
-                && !ResidentService.isServiceRunning(context)) {
-            startService(new Intent(this, ResidentService.class));
+        Log.append(context, "設定アプリ起動");
+
+        if (Prefs.getMainSetting(this)) {
+            Utils.set(this, true);
+
+            if (!ResidentService.isServiceRunning(context)) {
+                startService(new Intent(this, ResidentService.class));
+            }
         }
     }
 
@@ -72,6 +80,9 @@ public class Setting extends Activity {
         case SHOW_FUNCTION:
             dialog = showSelectFunctionDialog();
             break;
+        case CONFIRM_CLEAR_LOG:
+            dialog = showCnfirmClearLog();
+            break;
         default:
             break;
         }
@@ -80,65 +91,134 @@ public class Setting extends Activity {
 
     private Dialog showSelectFunctionDialog() {
         final Context context = this;
-        View mainView = LayoutInflater.from(this).inflate(R.layout.main, null);
-
-        final CheckBox mainSettingCheckBox = (CheckBox) mainView
-                .findViewById(R.id.checkbox_main_setting);
-        final CheckBox wifiOnOffCheckBox = (CheckBox) mainView
-                .findViewById(R.id.checkbox_wifi_on_off);
-        final CheckBox delayOffCheckBox = (CheckBox) mainView
-                .findViewById(R.id.checkbox_delay_off);
+        View mainView = LayoutInflater.from(context).inflate(R.layout.main,
+                null);
+        final RadioGroup mainSettingRadioGroup = (RadioGroup) mainView
+                .findViewById(R.id.radiogroup_main_setting);
+        final RadioGroup reconnectDurationRadioGroup = (RadioGroup) mainView
+                .findViewById(R.id.radiogroup_reconnect_duration);
+        final RadioButton reconnectDuration0RadioButton = (RadioButton) mainView
+                .findViewById(R.id.radiobutton_reconnect_duration_0);
+        final RadioButton reconnectDuration30RadioButton = (RadioButton) mainView
+                .findViewById(R.id.radiobutton_reconnect_duration_30);
+        final RadioButton reconnectDuration60RadioButton = (RadioButton) mainView
+                .findViewById(R.id.radiobutton_reconnect_duration_60);
         final CheckBox mailNotificationCheckBox = (CheckBox) mainView
                 .findViewById(R.id.checkbox_mail_notification);
+        final CheckBox debugModeCheckbox = (CheckBox) mainView
+                .findViewById(R.id.checkbox_debug_mode);
 
-        mainSettingCheckBox.setChecked(Prefs.getMainSetting(context));
-        mainSettingCheckBox
-                .setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        if (!Prefs.getMainSetting(context)) {
+            mainSettingRadioGroup.check(R.id.radiobutton_none);
+            reconnectDuration0RadioButton.setEnabled(false);
+            reconnectDuration30RadioButton.setEnabled(false);
+            reconnectDuration60RadioButton.setEnabled(false);
+            mailNotificationCheckBox.setEnabled(false);
+            debugModeCheckbox.setEnabled(false);
+        } else if (!Prefs.getWifiSetting(context)) {
+            mainSettingRadioGroup.check(R.id.radiobutton_3g_lte);
+            reconnectDuration0RadioButton.setEnabled(true);
+            reconnectDuration30RadioButton.setEnabled(true);
+            reconnectDuration60RadioButton.setEnabled(true);
+            mailNotificationCheckBox.setEnabled(true);
+            debugModeCheckbox.setEnabled(true);
+        } else {
+            mainSettingRadioGroup.check(R.id.radiobutton_3g_lte_wifi);
+            reconnectDuration0RadioButton.setEnabled(true);
+            reconnectDuration30RadioButton.setEnabled(true);
+            reconnectDuration60RadioButton.setEnabled(true);
+            mailNotificationCheckBox.setEnabled(true);
+            debugModeCheckbox.setEnabled(true);
+        }
+        mainSettingRadioGroup
+                .setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
                     @Override
-                    public void onCheckedChanged(CompoundButton buttonView,
-                            boolean isChecked) {
-                        Utils.addLog(context, "メイン設定を"
-                                + (isChecked ? "ON" : "OFF") + "に変更しました");
-                        Prefs.setMainSetting(context, isChecked);
-                        wifiOnOffCheckBox.setEnabled(isChecked);
-                        mailNotificationCheckBox.setEnabled(isChecked);
-                        delayOffCheckBox.setEnabled(isChecked);
-                        if (isChecked) {
-                            startService(new Intent(context,
-                                    ResidentService.class));
-
-                        } else {
+                    public void onCheckedChanged(RadioGroup group, int checkedId) {
+                        switch (checkedId) {
+                        case R.id.radiobutton_none:
+                            Log.append(context, "メイン設定をOFFにしました");
+                            Prefs.setMainSetting(context, false);
+                            reconnectDuration0RadioButton.setEnabled(false);
+                            reconnectDuration30RadioButton.setEnabled(false);
+                            reconnectDuration60RadioButton.setEnabled(false);
+                            mailNotificationCheckBox.setEnabled(false);
+                            debugModeCheckbox.setEnabled(false);
                             stopService(new Intent(context,
                                     ResidentService.class));
+                            break;
+                        case R.id.radiobutton_3g_lte:
+                            Log.append(context, "メイン設定を3Gにしました");
+                            Prefs.setMainSetting(context, true);
+                            Prefs.setWifiSetting(context, false);
+                            reconnectDuration0RadioButton.setEnabled(true);
+                            reconnectDuration30RadioButton.setEnabled(true);
+                            reconnectDuration60RadioButton.setEnabled(true);
+                            mailNotificationCheckBox.setEnabled(true);
+                            debugModeCheckbox.setEnabled(true);
+                            if (!ResidentService.isServiceRunning(context)) {
+                                startService(new Intent(context,
+                                        ResidentService.class));
+                            }
+                            break;
+                        case R.id.radiobutton_3g_lte_wifi:
+                            Log.append(context, "メイン設定を3G/WiFiにしました");
+                            Prefs.setMainSetting(context, true);
+                            Prefs.setWifiSetting(context, true);
+                            reconnectDuration0RadioButton.setEnabled(true);
+                            reconnectDuration30RadioButton.setEnabled(true);
+                            reconnectDuration60RadioButton.setEnabled(true);
+                            mailNotificationCheckBox.setEnabled(true);
+                            debugModeCheckbox.setEnabled(true);
+                            if (!ResidentService.isServiceRunning(context)) {
+                                startService(new Intent(context,
+                                        ResidentService.class));
+                            }
+                            break;
+                        default:
+                            break;
                         }
                     }
                 });
 
-        wifiOnOffCheckBox.setChecked(Prefs.getWifiSetting(context));
-        wifiOnOffCheckBox.setEnabled(Prefs.getMainSetting(context));
-        wifiOnOffCheckBox
-                .setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-
+        switch (Prefs.getReconnectDuration(this)) {
+        case 0:
+            reconnectDurationRadioGroup
+                    .check(R.id.radiobutton_reconnect_duration_0);
+            break;
+        case 30:
+            reconnectDurationRadioGroup
+                    .check(R.id.radiobutton_reconnect_duration_30);
+            break;
+        case 60:
+            reconnectDurationRadioGroup
+                    .check(R.id.radiobutton_reconnect_duration_60);
+            break;
+        default:
+            Prefs.setReconnectDuration(context, 0);
+            reconnectDurationRadioGroup
+                    .check(R.id.radiobutton_reconnect_duration_0);
+            break;
+        }
+        reconnectDurationRadioGroup
+                .setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
                     @Override
-                    public void onCheckedChanged(CompoundButton buttonView,
-                            boolean isChecked) {
-                        Utils.addLog(context, "WiFi設定を"
-                                + (isChecked ? "ON" : "OFF") + "に変更しました");
-                        Prefs.setWifiSetting(context, isChecked);
-                    }
-                });
-
-        delayOffCheckBox.setChecked(Prefs.getDelayOff(context));
-        delayOffCheckBox.setEnabled(Prefs.getMainSetting(context));
-        delayOffCheckBox
-                .setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-
-                    @Override
-                    public void onCheckedChanged(CompoundButton buttonView,
-                            boolean isChecked) {
-                        Utils.addLog(context, "遅延切断を"
-                                + (isChecked ? "ON" : "OFF") + "に変更しました");
-                        Prefs.setDelayOff(context, isChecked);
+                    public void onCheckedChanged(RadioGroup group, int checkedId) {
+                        switch (checkedId) {
+                        case R.id.radiobutton_reconnect_duration_0:
+                            Log.append(context, "再接続間隔を0分にしました");
+                            Prefs.setReconnectDuration(context, 0);
+                            break;
+                        case R.id.radiobutton_reconnect_duration_30:
+                            Log.append(context, "再接続間隔を30分にしました");
+                            Prefs.setReconnectDuration(context, 30);
+                            break;
+                        case R.id.radiobutton_reconnect_duration_60:
+                            Log.append(context, "再接続間隔を60分にしました");
+                            Prefs.setReconnectDuration(context, 60);
+                            break;
+                        default:
+                            break;
+                        }
                     }
                 });
 
@@ -154,17 +234,42 @@ public class Setting extends Activity {
                         context.startActivity(new Intent(
                                 android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS));
                         removeDialog(SHOW_FUNCTION);
-                        Utils.addLog(context, "設定画面を表示しました");
+                        Log.append(context, "着信通知画面を表示しました");
+                    }
+                });
+
+        if (!DEBUG) {
+            final View divider = (View) mainView
+                    .findViewById(R.id.divider_debug_mode);
+            divider.setVisibility(View.GONE);
+            final TextView debugModeExplanation = (TextView) mainView
+                    .findViewById(R.id.text_debug_mode);
+            debugModeExplanation.setVisibility(View.GONE);
+            debugModeCheckbox.setVisibility(View.GONE);
+            Prefs.setDebugMode(context, false);
+        }
+
+        debugModeCheckbox.setChecked(Prefs.getDebugMode(context));
+        debugModeCheckbox
+                .setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+
+                    @Override
+                    public void onCheckedChanged(CompoundButton buttonView,
+                            boolean isChecked) {
+                        Prefs.setDebugMode(context, isChecked);
+                        Log.append(context, "動作確認モードを"
+                                + (isChecked ? "ON" : "OFF") + "にしました");
                     }
                 });
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle(R.string.title_function);
+        builder.setTitle(R.string.app_name);
         builder.setIcon(R.drawable.ic_launcher);
         builder.setView(mainView);
         builder.setPositiveButton(R.string.button_ok,
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
+                        Log.append(context, "設定アプリ終了");
                         finish();
                     }
                 });
@@ -180,6 +285,7 @@ public class Setting extends Activity {
 
             @Override
             public void onCancel(DialogInterface dialog) {
+                Log.append(context, "設定アプリ終了");
                 finish();
             }
         });
@@ -190,33 +296,26 @@ public class Setting extends Activity {
         final Context context = this;
 
         View view = LayoutInflater.from(this).inflate(R.layout.log, null);
-        final CheckBox debugModeCheckbox = (CheckBox) view
-                .findViewById(R.id.checkbox_debug_mode);
         final TextView textView = (TextView) view.findViewById(R.id.log_view);
 
-        textView.setText(Prefs.getLog(this));
-
-        debugModeCheckbox.setChecked(Prefs.getDebugMode(context));
-        debugModeCheckbox
-                .setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-
-                    @Override
-                    public void onCheckedChanged(CompoundButton buttonView,
-                            boolean isChecked) {
-                        Prefs.setDebugMode(context, isChecked);
-                        Utils.addLog(context, "デバッグ設定を"
-                                + (isChecked ? "ON" : "OFF") + "に変更しました");
-                    }
-                });
+        textView.setText(Log.read(context));
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle(R.string.title_log);
+        builder.setTitle(R.string.app_name);
         builder.setView(view);
         builder.setIcon(R.drawable.ic_launcher);
-        builder.setPositiveButton(R.string.button_ok,
+        builder.setPositiveButton(R.string.button_update_log,
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        finish();
+                        removeDialog(SHOW_LOG);
+                        showDialog(SHOW_LOG);
+                    }
+                });
+        builder.setNeutralButton(R.string.button_clear_log,
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        removeDialog(SHOW_LOG);
+                        showDialog(CONFIRM_CLEAR_LOG);
                     }
                 });
         builder.setNegativeButton(R.string.button_function,
@@ -226,19 +325,49 @@ public class Setting extends Activity {
                         showDialog(SHOW_FUNCTION);
                     }
                 });
-        builder.setNeutralButton(R.string.button_clear_log,
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        Utils.clearLog(context);
-                        removeDialog(SHOW_LOG);
-                        showDialog(SHOW_LOG);
-                    }
-                });
         builder.setCancelable(true);
         builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
 
             @Override
             public void onCancel(DialogInterface dialog) {
+                Log.append(context, "設定アプリ終了");
+                finish();
+            }
+        });
+        return builder.create();
+    }
+
+    private Dialog showCnfirmClearLog() {
+        final Context context = this;
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle(R.string.app_name);
+        builder.setIcon(R.drawable.ic_launcher);
+        builder.setMessage(R.string.message_clear_log);
+        builder.setPositiveButton(R.string.button_yes,
+                new DialogInterface.OnClickListener() {
+
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Log.clear(context);
+                        Log.append(context, "ログをクリアしました");
+                        removeDialog(CONFIRM_CLEAR_LOG);
+                        showDialog(SHOW_LOG);
+                    }
+                });
+        builder.setNeutralButton(R.string.button_no,
+                new DialogInterface.OnClickListener() {
+
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        removeDialog(CONFIRM_CLEAR_LOG);
+                        showDialog(SHOW_LOG);
+                    }
+                });
+        builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
+
+            @Override
+            public void onCancel(DialogInterface dialog) {
+                Log.append(context, "設定アプリ終了");
                 finish();
             }
         });

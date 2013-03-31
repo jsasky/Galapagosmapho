@@ -1,7 +1,5 @@
 package com.onedialogproject.galapagosmapho;
 
-import com.onedialogproject.galapagosmapho.R;
-
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.content.Context;

@@ -1,13 +1,14 @@
 package com.onedialogproject.galapagosmapho;
 
-import com.onedialogproject.galapagosmapho.DebugTools.Pattern;
-
 import android.content.Context;
+
+import com.onedialogproject.galapagosmapho.DebugTools.Pattern;
+import com.onedialogproject.galapagosmapho.ResidentService.Carrier;
 
 public class ResidentServiceScreenOffDataOn extends
         ResidentService.ResidentServiceState {
 
-    private static final int DURATION = 60;// sec
+    private static final int DATA_ON_DURATION = 1;// min
 
     public ResidentServiceScreenOffDataOn(Context context,
             ResidentService residentService) {
@@ -20,8 +21,8 @@ public class ResidentServiceScreenOffDataOn extends
         if (Prefs.getDebugMode(mContext)) {
             DebugTools.notify(mContext, Pattern.DATA_ON);
         }
-        Utils.addLog(mContext, "タイマー開始:切断まで" + DURATION + "秒");
-        mResidentService.startTimer(DURATION);
+        Log.append(mContext, "切断タイマー開始:ネット切断まで" + DATA_ON_DURATION + "分");
+        mResidentService.startTimer(DATA_ON_DURATION * 60);
     }
 
     @Override
@@ -51,14 +52,18 @@ public class ResidentServiceScreenOffDataOn extends
     }
 
     @Override
-    public void onNotifyReceiveMail() {
-        Utils.addLog(mContext, "メール着信通知");
-        Utils.notify(mContext);
+    public void onNotifyReceiveMail(Carrier carrier) {
+        notifyReceiveMail(carrier);
     }
 
     @Override
     public void onTimerExpired() {
         mResidentService.changeState(new ResidentServiceScreenOffDataOff(
                 mContext, mResidentService));
+    }
+
+    @Override
+    public void onWifiConnected() {
+        // Do nothing
     }
 }

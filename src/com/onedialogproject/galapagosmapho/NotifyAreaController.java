@@ -1,7 +1,5 @@
 package com.onedialogproject.galapagosmapho;
 
-import com.onedialogproject.galapagosmapho.R;
-
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Notification;
@@ -49,17 +47,19 @@ public class NotifyAreaController extends AccessibilityService {
             @Override
             public void run() {
 
-                Toast.makeText(context, R.string.startup_message_test,
-                        Toast.LENGTH_LONG).show();
+                if (Prefs.getMainSetting(context)) {
+                    Toast.makeText(context, R.string.startup_message_test,
+                            Toast.LENGTH_SHORT).show();
+                }
 
                 handler.postDelayed(new Runnable() {
 
                     @Override
                     public void run() {
-                        if (!mNotifyCheckFlag) {
+                        if (!mNotifyCheckFlag && Prefs.getMainSetting(context)) {
                             Toast.makeText(context,
                                     R.string.startup_message_failed,
-                                    Toast.LENGTH_LONG).show();
+                                    Toast.LENGTH_SHORT).show();
                         }
                     }
                 }, 2000);
@@ -72,13 +72,19 @@ public class NotifyAreaController extends AccessibilityService {
     public void onAccessibilityEvent(AccessibilityEvent event) {
         final Context context = this;
 
+        if (event == null) {
+            return;
+        }
+
         int eventType = event.getEventType();
         switch (eventType) {
         case AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED:
             mConfirmed = true;
             if (!mNotifyCheckFlag) {
-                Toast.makeText(context, R.string.startup_message_success,
-                        Toast.LENGTH_LONG).show();
+                if (Prefs.getMainSetting(context)) {
+                    Toast.makeText(context, R.string.startup_message_success,
+                            Toast.LENGTH_SHORT).show();
+                }
                 mNotifyCheckFlag = true;
             }
 

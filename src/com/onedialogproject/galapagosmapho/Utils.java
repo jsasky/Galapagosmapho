@@ -2,8 +2,6 @@ package com.onedialogproject.galapagosmapho;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 import junit.framework.Assert;
 import android.app.Notification;
@@ -20,11 +18,9 @@ public class Utils {
     public static enum Device {
         WIFI("wifi", "WiFi"), DATA_3G_LTE("roaming", "3G");
 
-        final String suffix;
         final String log;
 
         Device(String suffix, String log) {
-            this.suffix = suffix;
             this.log = log;
         }
     }
@@ -98,32 +94,6 @@ public class Utils {
         return false;
     }
 
-    private static int MAX_LOG_LENGTH = 10000;
-
-    public static void clearLog(Context context) {
-        Prefs.setLog(context, "");
-    }
-
-    public static void addLog(Context context, String line) {
-        StringBuffer log = new StringBuffer(MAX_LOG_LENGTH);
-        log.append(getDateTimeString(context) + " " + line);
-        log.append('\n');
-        log.append(Prefs.getLog(context));
-        if (log.length() > MAX_LOG_LENGTH) {
-            Prefs.setLog(context, log.toString().substring(0, MAX_LOG_LENGTH));
-        } else {
-            Prefs.setLog(context, log.toString());
-        }
-        DebugTools.routeCheck(line, true);
-    }
-
-    private static String getDateTimeString(Context context) {
-        final SimpleDateFormat DATETIME_FORMAT = new SimpleDateFormat(
-                "MM/dd kk:mm:ss");
-        Date date = new Date();
-        return DATETIME_FORMAT.format(date);
-    }
-
     public static boolean isNotifyAreaControllerAvailable(Context context) {
         int iAccessibilityEnabled = 0;
         try {
@@ -172,15 +142,18 @@ public class Utils {
     }
 
     public static void set(Context context, boolean enabled) {
-        StringBuffer buffer = new StringBuffer();
         for (Device device : Device.values()) {
-            if ((device == Device.WIFI) && !Prefs.getWifiSetting(context)) {
-                buffer.append(device.log + ":- ");
-            } else {
-                buffer.append(device.log + ":" + (enabled ? "ON" : "OFF") + " ");
+            switch (device) {
+            case WIFI:
+                if (Prefs.getWifiSetting(context)) {
+                    setDeviceState(context, Device.WIFI, enabled);
+                }
+                break;
+            case DATA_3G_LTE:
+            default:
                 setDeviceState(context, device, enabled);
+                break;
             }
         }
-        Utils.addLog(context, buffer.toString() + "にセットしました");
     }
 }

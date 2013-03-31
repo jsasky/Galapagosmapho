@@ -2,8 +2,6 @@ package com.onedialogproject.galapagosmapho;
 
 import java.util.List;
 
-import com.onedialogproject.galapagosmapho.R;
-
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningServiceInfo;
 import android.app.AlarmManager;
@@ -13,8 +11,12 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.wifi.WifiManager;
 import android.os.BatteryManager;
 import android.os.Binder;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Parcel;
@@ -26,6 +28,10 @@ public class ResidentService extends Service {
 
     public static enum ChargingState {
         UNKNOWN, CHARGING, NOT_CHARGING;
+    };
+
+    public static enum Carrier {
+        DOCOMO, AU, SOFTBANK,
     };
 
     private static enum DataConnectionState {
@@ -55,84 +61,164 @@ public class ResidentService extends Service {
 
         public abstract void onNotCharging();
 
-        public abstract void onNotifyReceiveMail();
+        public abstract void onNotifyReceiveMail(Carrier carrier);
 
         public abstract void onTimerExpired();
+
+        public abstract void onWifiConnected();
+
+        public void notifyReceiveMail(Carrier carrier) {
+            switch (carrier) {
+            case DOCOMO:
+                Log.append(mContext, "メール着信通知");
+                Utils.notify(mContext);
+            case AU:
+                // Do nothing
+                break;
+            case SOFTBANK:
+                // Do nothing
+                break;
+            default:
+                // Do nothing
+                break;
+            }
+        }
     };
 
-    private BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
 
         @Override
-        public void onReceive(Context context, Intent intent) {
+        public void onReceive(final Context context, Intent intent) {
+            if ((intent == null) || (context == null)) {
+                return;
+            }
+
             String action = intent.getAction();
             if (action == null) {
                 return;
-            } else if (action.equals(Intent.ACTION_SCREEN_ON)) {
-                Utils.addLog(context, "画面がONになりました");
+            } else if (Intent.ACTION_SCREEN_ON.equals(action)) {
+                Log.append(context, "画面がONになりました");
                 if (Prefs.getMainSetting(context)) {
                     mHandler.post(new Runnable() {
 
                         @Override
                         public void run() {
-                            mResidentServiceState.onScreenOn();
+                            try {
+                                mResidentServiceState.onScreenOn();
+                            } catch (Throwable e) {
+                                Log.printStackTrace(context,
+                                        "エラー発生:onScreenOn", e);
+                            }
                         }
                     });
                 } else {
-                    Utils.addLog(context, "ガラパゴスマホの設定がOFFのため何もしませんでした");
+                    Log.append(context, "ガラパゴスマホの設定がOFFのため何もしませんでした");
                 }
-            } else if (action.equals(Intent.ACTION_SCREEN_OFF)) {
-                Utils.addLog(context, "画面がOFFになりました");
+            } else if (Intent.ACTION_SCREEN_OFF.equals(action)) {
+                Log.append(context, "画面がOFFになりました");
                 if (Prefs.getMainSetting(context)) {
                     mHandler.post(new Runnable() {
 
                         @Override
                         public void run() {
-                            mResidentServiceState.onScreenOff();
+                            try {
+                                mResidentServiceState.onScreenOff();
+                            } catch (Throwable e) {
+                                Log.printStackTrace(context,
+                                        "エラー発生:onScreenOff", e);
+                            }
                         }
                     });
                 } else {
-                    Utils.addLog(context, "ガラパゴスマホの設定がOFFのため何もしませんでした");
+                    Log.append(context, "ガラパゴスマホの設定がOFFのため何もしませんでした");
                 }
-            } else if (action.equals(Intent.ACTION_BATTERY_CHANGED)) {
+            } else if (Intent.ACTION_BATTERY_CHANGED.equals(action)) {
                 switch (isCharging(intent, context)) {
                 case CHARGING: {
                     if (mChargingState != ChargingState.CHARGING) {
-                        Utils.addLog(context, "充電状態:充電中");
+                        Log.append(context, "充電が開始されました");
                         mChargingState = ChargingState.CHARGING;
                         if (Prefs.getMainSetting(context)) {
                             mHandler.post(new Runnable() {
 
                                 @Override
                                 public void run() {
-                                    mResidentServiceState.onCharging();
+                                    try {
+                                        mResidentServiceState.onCharging();
+                                    } catch (Throwable e) {
+                                        Log.printStackTrace(context,
+                                                "エラー発生:onCharging", e);
+                                    }
                                 }
                             });
                         } else {
-                            Utils.addLog(context, "ガラパゴスマホの設定がOFFのため何もしませんでした");
+                            Log.append(context, "ガラパゴスマホの設定がOFFのため何もしませんでした");
                         }
                     }
                     break;
                 }
                 case NOT_CHARGING:
                     if (mChargingState != ChargingState.NOT_CHARGING) {
-                        Utils.addLog(context, "充電状態:バッテリー動作中");
+                        Log.append(context, "バッテリー動作を開始しました");
                         mChargingState = ChargingState.NOT_CHARGING;
                         if (Prefs.getMainSetting(context)) {
                             mHandler.post(new Runnable() {
 
                                 @Override
                                 public void run() {
-                                    mResidentServiceState.onNotCharging();
+                                    try {
+                                        mResidentServiceState.onNotCharging();
+                                    } catch (Throwable e) {
+                                        Log.printStackTrace(context,
+                                                "エラー発生:onNotCharging", e);
+                                    }
                                 }
                             });
                         } else {
-                            Utils.addLog(context, "ガラパゴスマホの設定がOFFのため何もしませんでした");
+                            Log.append(context, "ガラパゴスマホの設定がOFFのため何もしませんでした");
                         }
                     }
                     break;
                 default:
                     break;
                 }
+            } else if (WifiManager.NETWORK_STATE_CHANGED_ACTION.equals(action)) {
+                Bundle extras = intent.getExtras();
+                if (extras != null) {
+                    NetworkInfo networkInfo = extras
+                            .getParcelable(WifiManager.EXTRA_NETWORK_INFO);
+                    if (networkInfo != null) {
+                        if (networkInfo.isConnected()) {
+                            mHandler.post(new Runnable() {
+
+                                @Override
+                                public void run() {
+                                    try {
+                                        mResidentServiceState.onWifiConnected();
+                                    } catch (Throwable e) {
+                                        Log.printStackTrace(context,
+                                                "エラー発生:onWifiConnected", e);
+                                    }
+                                }
+                            });
+                        }
+                    }
+                }
+            } else if ((intent != null)
+                    && ACTION_TIMER_EXPIRED.equals(intent.getAction())) {
+                mHandler.post(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        try {
+                            mPendingIntent = null;
+                            mResidentServiceState.onTimerExpired();
+                        } catch (Throwable e) {
+                            Log.printStackTrace(context,
+                                    "エラー発生:onTimerExpired", e);
+                        }
+                    }
+                });
             }
         }
     };
@@ -141,23 +227,31 @@ public class ResidentService extends Service {
         @Override
         public void onNotify(String message) {
             Context context = ResidentService.this;
-            Utils.addLog(context, "通知:" + message);
+            Log.append(context, "通知:" + message);
 
             if (!Prefs.getMainSetting(context) || message == null) {
                 return;
             }
 
-            for (String string : RECEIVE_MAIL_STRINGS) {
-                if (message.equals(string)) {
-                    mHandler.post(new Runnable() {
+            Carrier carrier = null;
+            if (message.equals("[未受信メール]") || message.equals("[未受信メールがあります]")) {
+                carrier = Carrier.DOCOMO;
+            } else if (message.equals("[メール着信通知]")) {
+                carrier = Carrier.AU;
+            } else if (message.startsWith("[SMS受信：")) {
+                carrier = Carrier.SOFTBANK;
+            }
 
-                        @Override
-                        public void run() {
-                            mResidentServiceState.onNotifyReceiveMail();
-                        }
-                    });
-                    break;
-                }
+            if (carrier != null) {
+                final Carrier carrierNotify = carrier;
+                mHandler.post(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        mResidentServiceState
+                                .onNotifyReceiveMail(carrierNotify);
+                    }
+                });
             }
         }
     };
@@ -170,12 +264,12 @@ public class ResidentService extends Service {
         }
     };
 
-    private static String[] RECEIVE_MAIL_STRINGS;
     private ResidentServiceState mResidentServiceState;
     private ChargingState mChargingState = ChargingState.UNKNOWN;
     private DataConnectionState mDataConnectionState = DataConnectionState.ON;
     private final Handler mHandler = new Handler();
     private PendingIntent mPendingIntent;
+    private ConnectivityManager mConnectivityManager;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -185,36 +279,30 @@ public class ResidentService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        mDataConnectionState = DataConnectionState.ON;
+        mConnectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
         mResidentServiceState = new ResidentServiceScreenOn(this, this);
         mResidentServiceState.start();
-        RECEIVE_MAIL_STRINGS = getResources().getStringArray(
-                R.array.receive_mail_strings);
-        mDataConnectionState = DataConnectionState.ON;
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent == null) {
-            return START_STICKY;
-        }
+        final Context context = this;
+        Log.append(context, "サービスが開始されました");
+        NotifyAreaController.setListener(mListener);
+        registerReceiver(mBroadcastReceiver, new IntentFilter(
+                Intent.ACTION_SCREEN_ON));
+        registerReceiver(mBroadcastReceiver, new IntentFilter(
+                Intent.ACTION_SCREEN_OFF));
+        registerReceiver(mBroadcastReceiver, new IntentFilter(
+                Intent.ACTION_BATTERY_CHANGED));
+        registerReceiver(mBroadcastReceiver, new IntentFilter(
+                WifiManager.NETWORK_STATE_CHANGED_ACTION));
+        registerReceiver(mBroadcastReceiver, new IntentFilter(
+                ACTION_TIMER_EXPIRED));
 
-        if (ACTION_TIMER_EXPIRED.equals(intent.getAction())) {
-            mResidentServiceState.onTimerExpired();
-        } else {
-            Context context = ResidentService.this;
-            registerReceiver(mBroadcastReceiver, new IntentFilter(
-                    Intent.ACTION_SCREEN_ON));
-            registerReceiver(mBroadcastReceiver, new IntentFilter(
-                    Intent.ACTION_SCREEN_OFF));
-            registerReceiver(mBroadcastReceiver, new IntentFilter(
-                    Intent.ACTION_BATTERY_CHANGED));
-
-            NotifyAreaController.putNotice(this, R.string.notify_startup,
-                    R.string.notify_explanation);
-            Utils.addLog(context, "サービスを開始しました");
-
-            NotifyAreaController.setListener(mListener);
-        }
+        NotifyAreaController.putNotice(context, R.string.notify_startup,
+                R.string.notify_explanation);
         return START_STICKY;
     }
 
@@ -222,11 +310,10 @@ public class ResidentService extends Service {
     public void onDestroy() {
         super.onDestroy();
         Context context = ResidentService.this;
-        unregisterReceiver(mBroadcastReceiver);
-        Utils.addLog(context, "サービスを停止しました");
         setOn();
         NotifyAreaController.removeNotice(this);
-        NotifyAreaController.setListener(null);
+        Log.append(context, "サービスが停止しました");
+        unregisterReceiver(mBroadcastReceiver);
     }
 
     public static boolean isServiceRunning(Context context) {
@@ -285,6 +372,7 @@ public class ResidentService extends Service {
     public boolean setOn() {
         boolean ret = false;
         if (mDataConnectionState != DataConnectionState.ON) {
+            Log.setDevice(this, true);
             Utils.set(this, true);
             mDataConnectionState = DataConnectionState.ON;
             ret = true;
@@ -295,6 +383,7 @@ public class ResidentService extends Service {
     public boolean setOff() {
         boolean ret = false;
         if (mDataConnectionState != DataConnectionState.OFF) {
+            Log.setDevice(this, false);
             Utils.set(this, false);
             mDataConnectionState = DataConnectionState.OFF;
             ret = true;
@@ -302,14 +391,27 @@ public class ResidentService extends Service {
         return ret;
     }
 
+    public boolean isWifiConnected() {
+        NetworkInfo networkInfo = mConnectivityManager.getActiveNetworkInfo();
+
+        if (networkInfo != null) {
+            if (networkInfo.isConnected()) {
+                if (networkInfo.getTypeName().equals("WIFI")) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public void startTimer(int time) {
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         if (mPendingIntent != null) {
             alarmManager.cancel(mPendingIntent);
         }
-        Intent intent = new Intent(this, ResidentService.class);
+        Intent intent = new Intent();
         intent.setAction(ACTION_TIMER_EXPIRED);
-        mPendingIntent = PendingIntent.getService(this, 0, intent, 0);
+        mPendingIntent = PendingIntent.getBroadcast(this, 0, intent, 0);
         long now = System.currentTimeMillis() + 1;
         long expiredTime = now + time * 1000;
         alarmManager.set(AlarmManager.RTC, expiredTime, mPendingIntent);

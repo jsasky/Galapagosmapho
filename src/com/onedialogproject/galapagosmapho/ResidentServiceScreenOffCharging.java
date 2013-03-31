@@ -1,8 +1,9 @@
 package com.onedialogproject.galapagosmapho;
 
-import com.onedialogproject.galapagosmapho.DebugTools.Pattern;
-
 import android.content.Context;
+
+import com.onedialogproject.galapagosmapho.DebugTools.Pattern;
+import com.onedialogproject.galapagosmapho.ResidentService.Carrier;
 
 public class ResidentServiceScreenOffCharging extends
         ResidentService.ResidentServiceState {
@@ -14,7 +15,7 @@ public class ResidentServiceScreenOffCharging extends
 
     @Override
     public void start() {
-        Utils.addLog(mContext, "充電状態のためネット接続中");
+        Log.append(mContext, "充電状態のためネット接続中");
         mResidentService.setOn();
         if (Prefs.getDebugMode(mContext)) {
             DebugTools.notify(mContext, Pattern.CHARGING);
@@ -44,24 +45,22 @@ public class ResidentServiceScreenOffCharging extends
 
     @Override
     public void onNotCharging() {
-        if (Prefs.getDelayOff(mContext)) {
-            mResidentService.changeState(new ResidentServiceScreenOffDataOn(
-                    mContext, mResidentService));
-        } else {
-            mResidentService
-                    .changeState(new ResidentServiceScreenOffNotCharging(
-                            mContext, mResidentService));
-        }
+        mResidentService.changeState(new ResidentServiceScreenOffDataOnFirst(
+                mContext, mResidentService));
     }
 
     @Override
-    public void onNotifyReceiveMail() {
-        Utils.addLog(mContext, "メール着信通知");
-        Utils.notify(mContext);
+    public void onNotifyReceiveMail(Carrier carrier) {
+        notifyReceiveMail(carrier);
     }
 
     @Override
     public void onTimerExpired() {
+        // Do nothing
+    }
+
+    @Override
+    public void onWifiConnected() {
         // Do nothing
     }
 }

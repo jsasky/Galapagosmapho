@@ -5,24 +5,24 @@ import android.content.Context;
 import com.onedialogproject.galapagosmapho.DebugTools.Pattern;
 import com.onedialogproject.galapagosmapho.ResidentService.Carrier;
 
-public class ResidentServiceScreenOffDataOff extends
+public class ResidentServiceScreenOffDataOnFirst extends
         ResidentService.ResidentServiceState {
 
-    public ResidentServiceScreenOffDataOff(Context context,
+    private static final int DATA_OFF_DURATION = 10;// sec
+
+    public ResidentServiceScreenOffDataOnFirst(Context context,
             ResidentService residentService) {
         super(context, residentService);
     }
 
     @Override
     public void start() {
-        mResidentService.setOff();
-        int duration = Prefs.getReconnectDuration(mContext);
+        mResidentService.setOn();
         if (Prefs.getDebugMode(mContext)) {
-            DebugTools.notify(mContext, Pattern.DATA_OFF);
-            duration = 1;// min
+            DebugTools.notify(mContext, Pattern.DATA_ON);
         }
-        Log.append(mContext, "接続タイマー開始:ネット接続まで" + duration + "分");
-        mResidentService.startTimer(duration * 60);
+        Log.append(mContext, "切断タイマー開始:ネット切断まで" + DATA_OFF_DURATION + "秒");
+        mResidentService.startTimer(DATA_OFF_DURATION);
     }
 
     @Override
@@ -43,8 +43,7 @@ public class ResidentServiceScreenOffDataOff extends
 
     @Override
     public void onCharging() {
-        mResidentService.changeState(new ResidentServiceScreenOffCharging(
-                mContext, mResidentService));
+        // Do nothing
     }
 
     @Override
@@ -59,8 +58,14 @@ public class ResidentServiceScreenOffDataOff extends
 
     @Override
     public void onTimerExpired() {
-        mResidentService.changeState(new ResidentServiceScreenOffDataOn(
-                mContext, mResidentService));
+        if (Prefs.getReconnectDuration(mContext) != 0) {
+            mResidentService.changeState(new ResidentServiceScreenOffDataOff(
+                    mContext, mResidentService));
+        } else {
+            mResidentService
+                    .changeState(new ResidentServiceScreenOffDataOffEternal(
+                            mContext, mResidentService));
+        }
     }
 
     @Override

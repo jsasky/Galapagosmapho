@@ -2,10 +2,13 @@ package com.onedialogproject.galapagosmapho;
 
 import android.content.Context;
 
-public class ResidentServiceScreenOffNotCharging extends
+import com.onedialogproject.galapagosmapho.DebugTools.Pattern;
+import com.onedialogproject.galapagosmapho.ResidentService.Carrier;
+
+public class ResidentServiceScreenOffDataOffEternal extends
         ResidentService.ResidentServiceState {
 
-    public ResidentServiceScreenOffNotCharging(Context context,
+    public ResidentServiceScreenOffDataOffEternal(Context context,
             ResidentService residentService) {
         super(context, residentService);
     }
@@ -13,6 +16,10 @@ public class ResidentServiceScreenOffNotCharging extends
     @Override
     public void start() {
         mResidentService.setOff();
+        if (Prefs.getDebugMode(mContext)) {
+            DebugTools.notify(mContext, Pattern.DATA_OFF);
+        }
+        Log.append(mContext, "接続タイマー作動なし:自動再接続はしません");
     }
 
     @Override
@@ -43,13 +50,17 @@ public class ResidentServiceScreenOffNotCharging extends
     }
 
     @Override
-    public void onNotifyReceiveMail() {
-        Utils.addLog(mContext, "メール着信通知");
-        Utils.notify(mContext);
+    public void onNotifyReceiveMail(Carrier carrier) {
+        notifyReceiveMail(carrier);
     }
 
     @Override
     public void onTimerExpired() {
+        // Do nothing
+    }
+
+    @Override
+    public void onWifiConnected() {
         // Do nothing
     }
 }

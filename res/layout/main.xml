@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent"
+	android:orientation="vertical" >
+
+	<View
+		android:layout_width="wrap_content"
+		android:layout_height="1dp"
+		android:layout_marginBottom="2dp"
+		android:background="#DD888888" >
+	</View>
+
+	<ScrollView
+		android:layout_width="fill_parent"
+		android:layout_height="fill_parent" >
+
+		<LinearLayout
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:orientation="vertical" >
+
+			<TextView
+				android:layout_width="fill_parent"
+				android:layout_height="fill_parent"
+				android:layout_weight="1"
+				android:text="@string/text_main_setting" />
+
+			<RadioGroup
+				android:id="@+id/radiogroup_main_setting"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:orientation="horizontal" >
+
+				<RadioButton
+					android:id="@+id/radiobutton_none"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="@string/radiobutton_none" >
+				</RadioButton>
+
+				<RadioButton
+					android:id="@+id/radiobutton_3g_lte"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="@string/radiobutton_3g_lte" >
+				</RadioButton>
+
+				<RadioButton
+					android:id="@+id/radiobutton_3g_lte_wifi"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="@string/radiobutton_3g_lte_wifi" >
+				</RadioButton>
+			</RadioGroup>
+
+			<TextView
+				android:layout_width="fill_parent"
+				android:layout_height="fill_parent"
+				android:layout_weight="1"
+				android:text="@string/text_main_setting_explanation" >
+			</TextView>
+
+			<View
+				android:layout_width="wrap_content"
+				android:layout_height="1dp"
+				android:layout_marginBottom="2dp"
+				android:background="#DD888888" >
+			</View>
+
+			<TextView
+				android:layout_width="fill_parent"
+				android:layout_height="fill_parent"
+				android:layout_weight="1"
+				android:text="@string/text_reconnect_duration" >
+			</TextView>
+
+			<RadioGroup
+				android:id="@+id/radiogroup_reconnect_duration"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:orientation="horizontal" >
+
+				<RadioButton
+					android:id="@+id/radiobutton_reconnect_duration_0"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="@string/radiobutton_reconnect_duration_0" >
+				</RadioButton>
+
+				<RadioButton
+					android:id="@+id/radiobutton_reconnect_duration_30"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="@string/radiobutton_reconnect_duration_30" >
+				</RadioButton>
+
+				<RadioButton
+					android:id="@+id/radiobutton_reconnect_duration_60"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="@string/radiobutton_reconnect_duration_60" >
+				</RadioButton>
+			</RadioGroup>
+
+			<TextView
+				android:layout_width="fill_parent"
+				android:layout_height="fill_parent"
+				android:layout_weight="1"
+				android:text="@string/text_reconnect_duration_explanation" >
+			</TextView>
+
+			<View
+				android:layout_width="wrap_content"
+				android:layout_height="1dp"
+				android:layout_marginBottom="2dp"
+				android:background="#DD888888" >
+			</View>
+
+			<CheckBox
+				android:id="@+id/checkbox_mail_notification"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:checked="false"
+				android:text="@string/checkbox_text_mail_notification" />
+
+			<TextView
+				android:layout_width="fill_parent"
+				android:layout_height="fill_parent"
+				android:layout_weight="1"
+				android:text="@string/text_mail" />
+
+			<View
+				android:id="@+id/divider_debug_mode"
+				android:layout_width="wrap_content"
+				android:layout_height="1dp"
+				android:layout_marginBottom="2dp"
+				android:background="#DD888888" >
+			</View>
+
+			<CheckBox
+				android:id="@+id/checkbox_debug_mode"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:checked="false"
+				android:text="@string/checkbox_text_debug_mode" />
+
+			<TextView
+				android:id="@+id/text_debug_mode"
+				android:layout_width="fill_parent"
+				android:layout_height="wrap_content"
+				android:text="@string/text_debug_mode_explanation" />
+
+		</LinearLayout>
+	</ScrollView>
+
+</LinearLayout>
