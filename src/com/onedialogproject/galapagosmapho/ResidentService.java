@@ -31,7 +31,7 @@ public class ResidentService extends Service {
     };
 
     public static enum Carrier {
-        DOCOMO, AU, SOFTBANK,
+        DOCOMO, AU, SOFTBANK, UNKNOWN,
     };
 
     private static enum DataConnectionState {
@@ -43,9 +43,8 @@ public class ResidentService extends Service {
         protected final ResidentService mResidentService;
         protected Handler mHandler = new Handler();
 
-        public ResidentServiceState(Context context,
-                ResidentService residentService) {
-            mContext = context;
+        public ResidentServiceState(ResidentService residentService) {
+            mContext = residentService;
             mResidentService = residentService;
         }
 
@@ -70,14 +69,17 @@ public class ResidentService extends Service {
         public void notifyReceiveMail(Carrier carrier) {
             switch (carrier) {
             case DOCOMO:
-                Log.append(mContext, "メール着信通知");
+                Log.append(mContext, "docomoメール着信");
                 Utils.notify(mContext);
             case AU:
+                Log.append(mContext, "auメール着信");
                 // Do nothing
                 break;
             case SOFTBANK:
+                Log.append(mContext, "SoftBankメール着信");
                 // Do nothing
                 break;
+            case UNKNOWN:
             default:
                 // Do nothing
                 break;
@@ -233,13 +235,15 @@ public class ResidentService extends Service {
                 return;
             }
 
-            Carrier carrier = null;
+            final Carrier carrier;
             if (message.equals("[未受信メール]") || message.equals("[未受信メールがあります]")) {
                 carrier = Carrier.DOCOMO;
             } else if (message.equals("[メール着信通知]")) {
                 carrier = Carrier.AU;
             } else if (message.startsWith("[SMS受信：")) {
                 carrier = Carrier.SOFTBANK;
+            } else {
+                carrier = Carrier.UNKNOWN;
             }
 
             if (carrier != null) {
@@ -270,6 +274,7 @@ public class ResidentService extends Service {
     private final Handler mHandler = new Handler();
     private PendingIntent mPendingIntent;
     private ConnectivityManager mConnectivityManager;
+    private static boolean mActiveFlag = false;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -281,14 +286,21 @@ public class ResidentService extends Service {
         super.onCreate();
         mDataConnectionState = DataConnectionState.ON;
         mConnectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
-        mResidentServiceState = new ResidentServiceScreenOn(this, this);
+        mResidentServiceState = new ResidentServiceScreenOn(this);
         mResidentServiceState.start();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         final Context context = this;
-        Log.append(context, "サービスが開始されました");
+        if (mActiveFlag) {
+            Log.append(context, "OSによりサービスが再起動されました");
+        } else {
+            Log.append(context, "サービスが開始されました");
+            NotifyAreaController.putNotice(context, R.string.notify_startup,
+                    R.string.notify_explanation);
+        }
+        mActiveFlag = true;
         NotifyAreaController.setListener(mListener);
         registerReceiver(mBroadcastReceiver, new IntentFilter(
                 Intent.ACTION_SCREEN_ON));
@@ -301,8 +313,6 @@ public class ResidentService extends Service {
         registerReceiver(mBroadcastReceiver, new IntentFilter(
                 ACTION_TIMER_EXPIRED));
 
-        NotifyAreaController.putNotice(context, R.string.notify_startup,
-                R.string.notify_explanation);
         return START_STICKY;
     }
 
@@ -313,6 +323,7 @@ public class ResidentService extends Service {
         setOn();
         NotifyAreaController.removeNotice(this);
         Log.append(context, "サービスが停止しました");
+        mActiveFlag = false;
         unregisterReceiver(mBroadcastReceiver);
     }
 

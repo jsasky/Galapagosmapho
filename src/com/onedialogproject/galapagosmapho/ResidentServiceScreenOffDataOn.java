@@ -1,18 +1,15 @@
 package com.onedialogproject.galapagosmapho;
 
-import android.content.Context;
-
 import com.onedialogproject.galapagosmapho.DebugTools.Pattern;
 import com.onedialogproject.galapagosmapho.ResidentService.Carrier;
 
 public class ResidentServiceScreenOffDataOn extends
         ResidentService.ResidentServiceState {
 
-    private static final int DATA_ON_DURATION = 1;// min
+    private static final int DATA_OFF_DURATION = 10;// sec
 
-    public ResidentServiceScreenOffDataOn(Context context,
-            ResidentService residentService) {
-        super(context, residentService);
+    public ResidentServiceScreenOffDataOn(ResidentService residentService) {
+        super(residentService);
     }
 
     @Override
@@ -21,8 +18,8 @@ public class ResidentServiceScreenOffDataOn extends
         if (Prefs.getDebugMode(mContext)) {
             DebugTools.notify(mContext, Pattern.DATA_ON);
         }
-        Log.append(mContext, "切断タイマー開始:ネット切断まで" + DATA_ON_DURATION + "分");
-        mResidentService.startTimer(DATA_ON_DURATION * 60);
+        Log.append(mContext, "切断タイマー開始:切断まで" + DATA_OFF_DURATION + "秒");
+        mResidentService.startTimer(DATA_OFF_DURATION);
     }
 
     @Override
@@ -32,7 +29,7 @@ public class ResidentServiceScreenOffDataOn extends
 
     @Override
     public void onScreenOn() {
-        mResidentService.changeState(new ResidentServiceScreenOn(mContext,
+        mResidentService.changeState(new ResidentServiceScreenOn(
                 mResidentService));
     }
 
@@ -59,7 +56,7 @@ public class ResidentServiceScreenOffDataOn extends
     @Override
     public void onTimerExpired() {
         mResidentService.changeState(new ResidentServiceScreenOffDataOff(
-                mContext, mResidentService));
+                mResidentService));
     }
 
     @Override

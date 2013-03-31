@@ -118,7 +118,7 @@ public class NotifyAreaController extends AccessibilityService {
 
     private static Notification createNotification(Context context, int id,
             int id_exp) {
-        Notification notification = new Notification(R.drawable.ic_launcher,
+        Notification notification = new Notification(R.drawable.ic_stat_notify,
                 context.getString(id), System.currentTimeMillis());
 
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0,

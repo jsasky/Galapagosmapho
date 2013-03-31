@@ -7,7 +7,6 @@ public class Prefs {
     private static final String PREFERENCE_FILENAME = "Galapagosmapho";
     private static final String MAIN_SETTING = "main_setting";
     private static final String WIFI_SETTING = "wifi_setting";
-    private static final String RECONNECT_DURATION = "reconnect_duration";
     private static final String DEBUG_MODE = "debug_mode";
 
     public static void setDebugMode(Context context, boolean enabled) {
@@ -50,19 +49,5 @@ public class Prefs {
         SharedPreferences sp = context.getSharedPreferences(
                 PREFERENCE_FILENAME, Context.MODE_PRIVATE);
         return sp.getBoolean(WIFI_SETTING, false);
-    }
-
-    public static void setReconnectDuration(Context context, int duration) {
-        SharedPreferences sp = context.getSharedPreferences(
-                PREFERENCE_FILENAME, Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = sp.edit();
-        editor.putInt(RECONNECT_DURATION, duration);
-        editor.commit();
-    }
-
-    public static int getReconnectDuration(Context context) {
-        SharedPreferences sp = context.getSharedPreferences(
-                PREFERENCE_FILENAME, Context.MODE_PRIVATE);
-        return sp.getInt(RECONNECT_DURATION, 0);
     }
 }

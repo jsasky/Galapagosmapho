@@ -11,7 +11,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
-import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 
@@ -95,14 +94,6 @@ public class Setting extends Activity {
                 null);
         final RadioGroup mainSettingRadioGroup = (RadioGroup) mainView
                 .findViewById(R.id.radiogroup_main_setting);
-        final RadioGroup reconnectDurationRadioGroup = (RadioGroup) mainView
-                .findViewById(R.id.radiogroup_reconnect_duration);
-        final RadioButton reconnectDuration0RadioButton = (RadioButton) mainView
-                .findViewById(R.id.radiobutton_reconnect_duration_0);
-        final RadioButton reconnectDuration30RadioButton = (RadioButton) mainView
-                .findViewById(R.id.radiobutton_reconnect_duration_30);
-        final RadioButton reconnectDuration60RadioButton = (RadioButton) mainView
-                .findViewById(R.id.radiobutton_reconnect_duration_60);
         final CheckBox mailNotificationCheckBox = (CheckBox) mainView
                 .findViewById(R.id.checkbox_mail_notification);
         final CheckBox debugModeCheckbox = (CheckBox) mainView
@@ -110,23 +101,14 @@ public class Setting extends Activity {
 
         if (!Prefs.getMainSetting(context)) {
             mainSettingRadioGroup.check(R.id.radiobutton_none);
-            reconnectDuration0RadioButton.setEnabled(false);
-            reconnectDuration30RadioButton.setEnabled(false);
-            reconnectDuration60RadioButton.setEnabled(false);
             mailNotificationCheckBox.setEnabled(false);
             debugModeCheckbox.setEnabled(false);
         } else if (!Prefs.getWifiSetting(context)) {
             mainSettingRadioGroup.check(R.id.radiobutton_3g_lte);
-            reconnectDuration0RadioButton.setEnabled(true);
-            reconnectDuration30RadioButton.setEnabled(true);
-            reconnectDuration60RadioButton.setEnabled(true);
             mailNotificationCheckBox.setEnabled(true);
             debugModeCheckbox.setEnabled(true);
         } else {
             mainSettingRadioGroup.check(R.id.radiobutton_3g_lte_wifi);
-            reconnectDuration0RadioButton.setEnabled(true);
-            reconnectDuration30RadioButton.setEnabled(true);
-            reconnectDuration60RadioButton.setEnabled(true);
             mailNotificationCheckBox.setEnabled(true);
             debugModeCheckbox.setEnabled(true);
         }
@@ -138,9 +120,6 @@ public class Setting extends Activity {
                         case R.id.radiobutton_none:
                             Log.append(context, "メイン設定をOFFにしました");
                             Prefs.setMainSetting(context, false);
-                            reconnectDuration0RadioButton.setEnabled(false);
-                            reconnectDuration30RadioButton.setEnabled(false);
-                            reconnectDuration60RadioButton.setEnabled(false);
                             mailNotificationCheckBox.setEnabled(false);
                             debugModeCheckbox.setEnabled(false);
                             stopService(new Intent(context,
@@ -150,9 +129,6 @@ public class Setting extends Activity {
                             Log.append(context, "メイン設定を3Gにしました");
                             Prefs.setMainSetting(context, true);
                             Prefs.setWifiSetting(context, false);
-                            reconnectDuration0RadioButton.setEnabled(true);
-                            reconnectDuration30RadioButton.setEnabled(true);
-                            reconnectDuration60RadioButton.setEnabled(true);
                             mailNotificationCheckBox.setEnabled(true);
                             debugModeCheckbox.setEnabled(true);
                             if (!ResidentService.isServiceRunning(context)) {
@@ -164,57 +140,12 @@ public class Setting extends Activity {
                             Log.append(context, "メイン設定を3G/WiFiにしました");
                             Prefs.setMainSetting(context, true);
                             Prefs.setWifiSetting(context, true);
-                            reconnectDuration0RadioButton.setEnabled(true);
-                            reconnectDuration30RadioButton.setEnabled(true);
-                            reconnectDuration60RadioButton.setEnabled(true);
                             mailNotificationCheckBox.setEnabled(true);
                             debugModeCheckbox.setEnabled(true);
                             if (!ResidentService.isServiceRunning(context)) {
                                 startService(new Intent(context,
                                         ResidentService.class));
                             }
-                            break;
-                        default:
-                            break;
-                        }
-                    }
-                });
-
-        switch (Prefs.getReconnectDuration(this)) {
-        case 0:
-            reconnectDurationRadioGroup
-                    .check(R.id.radiobutton_reconnect_duration_0);
-            break;
-        case 30:
-            reconnectDurationRadioGroup
-                    .check(R.id.radiobutton_reconnect_duration_30);
-            break;
-        case 60:
-            reconnectDurationRadioGroup
-                    .check(R.id.radiobutton_reconnect_duration_60);
-            break;
-        default:
-            Prefs.setReconnectDuration(context, 0);
-            reconnectDurationRadioGroup
-                    .check(R.id.radiobutton_reconnect_duration_0);
-            break;
-        }
-        reconnectDurationRadioGroup
-                .setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-                    @Override
-                    public void onCheckedChanged(RadioGroup group, int checkedId) {
-                        switch (checkedId) {
-                        case R.id.radiobutton_reconnect_duration_0:
-                            Log.append(context, "再接続間隔を0分にしました");
-                            Prefs.setReconnectDuration(context, 0);
-                            break;
-                        case R.id.radiobutton_reconnect_duration_30:
-                            Log.append(context, "再接続間隔を30分にしました");
-                            Prefs.setReconnectDuration(context, 30);
-                            break;
-                        case R.id.radiobutton_reconnect_duration_60:
-                            Log.append(context, "再接続間隔を60分にしました");
-                            Prefs.setReconnectDuration(context, 60);
                             break;
                         default:
                             break;

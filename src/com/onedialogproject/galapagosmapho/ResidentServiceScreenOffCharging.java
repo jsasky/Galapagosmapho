@@ -1,16 +1,13 @@
 package com.onedialogproject.galapagosmapho;
 
-import android.content.Context;
-
 import com.onedialogproject.galapagosmapho.DebugTools.Pattern;
 import com.onedialogproject.galapagosmapho.ResidentService.Carrier;
 
 public class ResidentServiceScreenOffCharging extends
         ResidentService.ResidentServiceState {
 
-    public ResidentServiceScreenOffCharging(Context context,
-            ResidentService residentService) {
-        super(context, residentService);
+    public ResidentServiceScreenOffCharging(ResidentService residentService) {
+        super(residentService);
     }
 
     @Override
@@ -29,7 +26,7 @@ public class ResidentServiceScreenOffCharging extends
 
     @Override
     public void onScreenOn() {
-        mResidentService.changeState(new ResidentServiceScreenOn(mContext,
+        mResidentService.changeState(new ResidentServiceScreenOn(
                 mResidentService));
     }
 
@@ -45,8 +42,8 @@ public class ResidentServiceScreenOffCharging extends
 
     @Override
     public void onNotCharging() {
-        mResidentService.changeState(new ResidentServiceScreenOffDataOnFirst(
-                mContext, mResidentService));
+        mResidentService.changeState(new ResidentServiceScreenOffDataOn(
+                mResidentService));
     }
 
     @Override

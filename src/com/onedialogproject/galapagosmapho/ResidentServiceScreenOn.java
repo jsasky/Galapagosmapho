@@ -1,7 +1,5 @@
 package com.onedialogproject.galapagosmapho;
 
-import android.content.Context;
-
 import com.onedialogproject.galapagosmapho.DebugTools.Pattern;
 import com.onedialogproject.galapagosmapho.ResidentService.Carrier;
 import com.onedialogproject.galapagosmapho.ResidentService.ChargingState;
@@ -12,9 +10,8 @@ public class ResidentServiceScreenOn extends
 
     private static final int WIFI_OFF_DURATION = 60;// sec
 
-    public ResidentServiceScreenOn(Context context,
-            ResidentService residentService) {
-        super(context, residentService);
+    public ResidentServiceScreenOn(ResidentService residentService) {
+        super(residentService);
     }
 
     @Override
@@ -49,18 +46,18 @@ public class ResidentServiceScreenOn extends
 
     @Override
     public void onScreenOn() {
-        // Do nothing
+        // Fail safe
+        Utils.set(mContext, true);
     }
 
     @Override
     public void onScreenOff() {
         if (mResidentService.getChargingState() == ChargingState.CHARGING) {
             mResidentService.changeState(new ResidentServiceScreenOffCharging(
-                    mContext, mResidentService));
+                    mResidentService));
         } else {
-            mResidentService
-                    .changeState(new ResidentServiceScreenOffDataOnFirst(
-                            mContext, mResidentService));
+            mResidentService.changeState(new ResidentServiceScreenOffDataOn(
+                    mResidentService));
         }
     }
 
