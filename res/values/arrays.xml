@@ -1,0 +1,8 @@
+<resources>
+
+	<string-array name="receive_mail_strings">
+		<item>[未受信メール]</item>
+		<item>[未受信メールがあります]</item>
+	</string-array>
+
+</resources>
