@@ -20,28 +20,30 @@ public class Log {
     private static StringBuffer sStringBuffer = null;
 
     public static void initialze(Context context) {
-        if (!sInitialized) {
-            sInitialized = true;
-            sStringBuffer = new StringBuffer(MAX_LOG_SIZE);
-            BufferedInputStream bufferedInputStream = null;
-            try {
-                bufferedInputStream = new BufferedInputStream(
-                        context.openFileInput(LOG_FILE_PATH));
-                byte[] readBytes = new byte[bufferedInputStream.available()];
-                bufferedInputStream.read(readBytes);
-                String readString = new String(readBytes);
-                sStringBuffer.append(readString);
-            } catch (FileNotFoundException e1) {
-                // Do nothing
-            } catch (IOException e) {
-                // Do nothing
-            } finally {
-                if (bufferedInputStream != null) {
-                    try {
-                        bufferedInputStream.close();
-                    } catch (IOException e) {
-                        // Give up
-                    }
+        if (sInitialized) {
+            return;
+        }
+
+        sInitialized = true;
+        sStringBuffer = new StringBuffer(MAX_LOG_SIZE);
+        BufferedInputStream bufferedInputStream = null;
+        try {
+            bufferedInputStream = new BufferedInputStream(
+                    context.openFileInput(LOG_FILE_PATH));
+            byte[] readBytes = new byte[bufferedInputStream.available()];
+            bufferedInputStream.read(readBytes);
+            String readString = new String(readBytes);
+            sStringBuffer.append(readString);
+        } catch (FileNotFoundException e1) {
+            // Do nothing
+        } catch (IOException e) {
+            // Do nothing
+        } finally {
+            if (bufferedInputStream != null) {
+                try {
+                    bufferedInputStream.close();
+                } catch (IOException e) {
+                    // Give up
                 }
             }
         }
@@ -122,12 +124,20 @@ public class Log {
                 }
                 break;
             case DATA_3G_LTE:
-            default:
-                buffer.append(device.log + ":" + (enabled ? "ON" : "OFF") + " ");
+                if (Prefs.getLte3gSetting(context)) {
+                    buffer.append(device.log + ":" + (enabled ? "ON" : "OFF")
+                            + " ");
+                }
+                break;
+            case BLUETOOTH:
+                if (Prefs.getBluetoothSetting(context)) {
+                    buffer.append(device.log + ":" + (enabled ? "ON" : "OFF")
+                            + " ");
+                }
                 break;
             }
         }
-        buffer.append("にセットしました");
+        buffer.append("にセット");
         append(context, buffer.toString().trim());
     }
 

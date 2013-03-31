@@ -11,7 +11,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
-import android.widget.RadioGroup;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.TextView;
 
 import com.onedialogproject.galapagosmapho.DebugTools.Pattern;
@@ -33,7 +33,7 @@ public class Setting extends Activity {
         DebugTools.notify(this, Pattern.SCREEN_ON);
         Log.append(context, "設定アプリ起動");
 
-        if (Prefs.getMainSetting(this)) {
+        if (Prefs.isActivated(context)) {
             Utils.set(this, true);
 
             if (!ResidentService.isServiceRunning(context)) {
@@ -63,7 +63,8 @@ public class Setting extends Activity {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (Prefs.getMainSetting(this)) {
+        final Context context = this;
+        if (Prefs.isActivated(context)) {
             Utils.set(this, true);
         }
     }
@@ -92,70 +93,95 @@ public class Setting extends Activity {
         final Context context = this;
         View mainView = LayoutInflater.from(context).inflate(R.layout.main,
                 null);
-        final RadioGroup mainSettingRadioGroup = (RadioGroup) mainView
-                .findViewById(R.id.radiogroup_main_setting);
+        final CheckBox lte3GCheckBox = (CheckBox) mainView
+                .findViewById(R.id.checkBox_lte_3g);
+        final CheckBox wifiCheckBox = (CheckBox) mainView
+                .findViewById(R.id.checkBox_wifi);
+        final CheckBox bluetoothCheckBox = (CheckBox) mainView
+                .findViewById(R.id.checkBox_bluetooth);
         final CheckBox mailNotificationCheckBox = (CheckBox) mainView
                 .findViewById(R.id.checkbox_mail_notification);
         final CheckBox debugModeCheckbox = (CheckBox) mainView
                 .findViewById(R.id.checkbox_debug_mode);
 
-        if (!Prefs.getMainSetting(context)) {
-            mainSettingRadioGroup.check(R.id.radiobutton_none);
-            mailNotificationCheckBox.setEnabled(false);
-            debugModeCheckbox.setEnabled(false);
-        } else if (!Prefs.getWifiSetting(context)) {
-            mainSettingRadioGroup.check(R.id.radiobutton_3g_lte);
-            mailNotificationCheckBox.setEnabled(true);
-            debugModeCheckbox.setEnabled(true);
-        } else {
-            mainSettingRadioGroup.check(R.id.radiobutton_3g_lte_wifi);
-            mailNotificationCheckBox.setEnabled(true);
-            debugModeCheckbox.setEnabled(true);
-        }
-        mainSettingRadioGroup
-                .setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+        lte3GCheckBox.setChecked(Prefs.getLte3gSetting(context));
+        lte3GCheckBox.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView,
+                    boolean isChecked) {
+                Log.append(context, "3G/LTEを" + (isChecked ? "ON" : "OFF")
+                        + "に設定");
+                Prefs.setLte3gSetting(context, isChecked);
+
+                if (Prefs.isActivated(context)) {
+                    mailNotificationCheckBox.setEnabled(true);
+                    debugModeCheckbox.setEnabled(true);
+                    if (!ResidentService.isServiceRunning(context)) {
+                        startService(new Intent(context, ResidentService.class));
+                    }
+                } else {
+                    mailNotificationCheckBox.setEnabled(false);
+                    debugModeCheckbox.setEnabled(false);
+                    stopService(new Intent(context, ResidentService.class));
+                }
+            }
+        });
+
+        wifiCheckBox.setChecked(Prefs.getWifiSetting(context));
+        wifiCheckBox.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView,
+                    boolean isChecked) {
+                Log.append(context, "Wi-Fiを" + (isChecked ? "ON" : "OFF")
+                        + "に設定");
+                Prefs.setWifiSetting(context, isChecked);
+
+                if (Prefs.isActivated(context)) {
+                    mailNotificationCheckBox.setEnabled(true);
+                    debugModeCheckbox.setEnabled(true);
+                    if (!ResidentService.isServiceRunning(context)) {
+                        startService(new Intent(context, ResidentService.class));
+                    }
+                } else {
+                    mailNotificationCheckBox.setEnabled(false);
+                    debugModeCheckbox.setEnabled(false);
+                    stopService(new Intent(context, ResidentService.class));
+                }
+            }
+        });
+
+        bluetoothCheckBox.setChecked(Prefs.getBluetoothSetting(context));
+        bluetoothCheckBox
+                .setOnCheckedChangeListener(new OnCheckedChangeListener() {
+
                     @Override
-                    public void onCheckedChanged(RadioGroup group, int checkedId) {
-                        switch (checkedId) {
-                        case R.id.radiobutton_none:
-                            Log.append(context, "メイン設定をOFFにしました");
-                            Prefs.setMainSetting(context, false);
+                    public void onCheckedChanged(CompoundButton buttonView,
+                            boolean isChecked) {
+                        Log.append(context, "BTを" + (isChecked ? "ON" : "OFF")
+                                + "に設定");
+                        Prefs.setBluetoothSetting(context, isChecked);
+
+                        if (Prefs.isActivated(context)) {
+                            mailNotificationCheckBox.setEnabled(true);
+                            debugModeCheckbox.setEnabled(true);
+                            if (!ResidentService.isServiceRunning(context)) {
+                                startService(new Intent(context,
+                                        ResidentService.class));
+                            }
+                        } else {
                             mailNotificationCheckBox.setEnabled(false);
                             debugModeCheckbox.setEnabled(false);
                             stopService(new Intent(context,
                                     ResidentService.class));
-                            break;
-                        case R.id.radiobutton_3g_lte:
-                            Log.append(context, "メイン設定を3Gにしました");
-                            Prefs.setMainSetting(context, true);
-                            Prefs.setWifiSetting(context, false);
-                            mailNotificationCheckBox.setEnabled(true);
-                            debugModeCheckbox.setEnabled(true);
-                            if (!ResidentService.isServiceRunning(context)) {
-                                startService(new Intent(context,
-                                        ResidentService.class));
-                            }
-                            break;
-                        case R.id.radiobutton_3g_lte_wifi:
-                            Log.append(context, "メイン設定を3G/WiFiにしました");
-                            Prefs.setMainSetting(context, true);
-                            Prefs.setWifiSetting(context, true);
-                            mailNotificationCheckBox.setEnabled(true);
-                            debugModeCheckbox.setEnabled(true);
-                            if (!ResidentService.isServiceRunning(context)) {
-                                startService(new Intent(context,
-                                        ResidentService.class));
-                            }
-                            break;
-                        default:
-                            break;
                         }
                     }
                 });
 
         mailNotificationCheckBox.setChecked(NotifyAreaController
                 .isActivated(context));
-        mailNotificationCheckBox.setEnabled(Prefs.getMainSetting(context));
+        mailNotificationCheckBox.setEnabled(Prefs.isActivated(context));
         mailNotificationCheckBox
                 .setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 
@@ -165,7 +191,7 @@ public class Setting extends Activity {
                         context.startActivity(new Intent(
                                 android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS));
                         removeDialog(SHOW_FUNCTION);
-                        Log.append(context, "着信通知画面を表示しました");
+                        Log.append(context, "着信通知画面を表示");
                     }
                 });
 

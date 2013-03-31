@@ -2,6 +2,7 @@ package com.onedialogproject.galapagosmapho;
 
 import com.onedialogproject.galapagosmapho.DebugTools.Pattern;
 import com.onedialogproject.galapagosmapho.ResidentService.Carrier;
+import com.onedialogproject.galapagosmapho.ResidentService.ServiceState;
 
 public class ResidentServiceScreenOffDataOn extends
         ResidentService.ResidentServiceState {
@@ -25,6 +26,11 @@ public class ResidentServiceScreenOffDataOn extends
     @Override
     public void end() {
         mResidentService.cancelTimer();
+    }
+
+    @Override
+    public ServiceState getState() {
+        return ServiceState.SCREEN_OFF_DATA_ON;
     }
 
     @Override

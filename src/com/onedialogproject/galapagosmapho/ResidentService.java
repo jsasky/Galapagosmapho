@@ -26,6 +26,30 @@ public class ResidentService extends Service {
 
     public static String ACTION_TIMER_EXPIRED = "ACTION_TIMER_EXPIRED";
 
+    public static enum ServiceState {
+        SCREEN_ON(0), SCREEN_OFF_CHARGING(1), SCREEN_OFF_DATA_ON(2), SCREEN_OFF_DATA_OFF(
+                3), SCREEN_OFF_TETHERING(4);
+
+        private final int mId;
+
+        ServiceState(int id) {
+            mId = id;
+        }
+
+        public int getId() {
+            return mId;
+        }
+
+        public static ServiceState getState(int id) {
+            for (ServiceState serviceState : ServiceState.values()) {
+                if (serviceState.getId() == id) {
+                    return serviceState;
+                }
+            }
+            return ServiceState.SCREEN_ON;
+        }
+    };
+
     public static enum ChargingState {
         UNKNOWN, CHARGING, NOT_CHARGING;
     };
@@ -51,6 +75,8 @@ public class ResidentService extends Service {
         public abstract void start();
 
         public abstract void end();
+
+        public abstract ServiceState getState();
 
         public abstract void onScreenOn();
 
@@ -98,130 +124,166 @@ public class ResidentService extends Service {
             String action = intent.getAction();
             if (action == null) {
                 return;
-            } else if (Intent.ACTION_SCREEN_ON.equals(action)) {
-                Log.append(context, "画面がONになりました");
-                if (Prefs.getMainSetting(context)) {
-                    mHandler.post(new Runnable() {
+            }
 
-                        @Override
-                        public void run() {
-                            try {
-                                mResidentServiceState.onScreenOn();
-                            } catch (Throwable e) {
-                                Log.printStackTrace(context,
-                                        "エラー発生:onScreenOn", e);
-                            }
-                        }
-                    });
-                } else {
-                    Log.append(context, "ガラパゴスマホの設定がOFFのため何もしませんでした");
-                }
+            if (Intent.ACTION_SCREEN_ON.equals(action)) {
+                screenOn(context);
             } else if (Intent.ACTION_SCREEN_OFF.equals(action)) {
-                Log.append(context, "画面がOFFになりました");
-                if (Prefs.getMainSetting(context)) {
-                    mHandler.post(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            try {
-                                mResidentServiceState.onScreenOff();
-                            } catch (Throwable e) {
-                                Log.printStackTrace(context,
-                                        "エラー発生:onScreenOff", e);
-                            }
-                        }
-                    });
-                } else {
-                    Log.append(context, "ガラパゴスマホの設定がOFFのため何もしませんでした");
-                }
+                screenOff(context);
             } else if (Intent.ACTION_BATTERY_CHANGED.equals(action)) {
                 switch (isCharging(intent, context)) {
                 case CHARGING: {
                     if (mChargingState != ChargingState.CHARGING) {
-                        Log.append(context, "充電が開始されました");
-                        mChargingState = ChargingState.CHARGING;
-                        if (Prefs.getMainSetting(context)) {
-                            mHandler.post(new Runnable() {
-
-                                @Override
-                                public void run() {
-                                    try {
-                                        mResidentServiceState.onCharging();
-                                    } catch (Throwable e) {
-                                        Log.printStackTrace(context,
-                                                "エラー発生:onCharging", e);
-                                    }
-                                }
-                            });
-                        } else {
-                            Log.append(context, "ガラパゴスマホの設定がOFFのため何もしませんでした");
-                        }
+                        onCharging(context);
                     }
                     break;
                 }
                 case NOT_CHARGING:
                     if (mChargingState != ChargingState.NOT_CHARGING) {
-                        Log.append(context, "バッテリー動作を開始しました");
-                        mChargingState = ChargingState.NOT_CHARGING;
-                        if (Prefs.getMainSetting(context)) {
-                            mHandler.post(new Runnable() {
-
-                                @Override
-                                public void run() {
-                                    try {
-                                        mResidentServiceState.onNotCharging();
-                                    } catch (Throwable e) {
-                                        Log.printStackTrace(context,
-                                                "エラー発生:onNotCharging", e);
-                                    }
-                                }
-                            });
-                        } else {
-                            Log.append(context, "ガラパゴスマホの設定がOFFのため何もしませんでした");
-                        }
+                        onNotCharging(context);
                     }
                     break;
                 default:
                     break;
                 }
             } else if (WifiManager.NETWORK_STATE_CHANGED_ACTION.equals(action)) {
-                Bundle extras = intent.getExtras();
-                if (extras != null) {
-                    NetworkInfo networkInfo = extras
-                            .getParcelable(WifiManager.EXTRA_NETWORK_INFO);
-                    if (networkInfo != null) {
-                        if (networkInfo.isConnected()) {
-                            mHandler.post(new Runnable() {
+                onNetworkStateChanged(context, intent);
+            } else if ((intent != null) && ACTION_TIMER_EXPIRED.equals(action)) {
+                onTimerExpired(context);
+            }
+        }
 
-                                @Override
-                                public void run() {
-                                    try {
-                                        mResidentServiceState.onWifiConnected();
-                                    } catch (Throwable e) {
-                                        Log.printStackTrace(context,
-                                                "エラー発生:onWifiConnected", e);
-                                    }
-                                }
-                            });
-                        }
+        private void screenOn(final Context context) {
+            Log.append(context, "通知:画面ON");
+            if (!Prefs.isActivated(context) && !Prefs.getWifiSetting(context)) {
+                Log.append(context, "ガラパゴスマホの設定がOFFのため何もしませんでした");
+                return;
+            }
+            mHandler.post(new Runnable() {
+
+                @Override
+                public void run() {
+                    try {
+                        mResidentServiceState.onScreenOn();
+                    } catch (Throwable e) {
+                        Log.printStackTrace(context, "エラー発生:onScreenOn", e);
                     }
                 }
-            } else if ((intent != null)
-                    && ACTION_TIMER_EXPIRED.equals(intent.getAction())) {
-                mHandler.post(new Runnable() {
+            });
+        }
 
-                    @Override
-                    public void run() {
-                        try {
-                            mPendingIntent = null;
-                            mResidentServiceState.onTimerExpired();
-                        } catch (Throwable e) {
-                            Log.printStackTrace(context,
-                                    "エラー発生:onTimerExpired", e);
-                        }
-                    }
-                });
+        private void screenOff(final Context context) {
+            Log.append(context, "通知:画面OFF");
+            if (!Prefs.isActivated(context) && !Prefs.getWifiSetting(context)) {
+                Log.append(context, "ガラパゴスマホの設定がOFFのため何もしませんでした");
+                return;
             }
+            mHandler.post(new Runnable() {
+
+                @Override
+                public void run() {
+                    try {
+                        mResidentServiceState.onScreenOff();
+                    } catch (Throwable e) {
+                        Log.printStackTrace(context, "エラー発生:onScreenOff", e);
+                    }
+                }
+            });
+        }
+
+        private void onCharging(final Context context) {
+            Log.append(context, "通知:充電開始");
+            mChargingState = ChargingState.CHARGING;
+            if (!Prefs.isActivated(context)) {
+                Log.append(context, "ガラパゴスマホの設定がOFFのため何もしませんでした");
+                return;
+            }
+            mHandler.post(new Runnable() {
+
+                @Override
+                public void run() {
+                    try {
+                        mResidentServiceState.onCharging();
+                    } catch (Throwable e) {
+                        Log.printStackTrace(context, "エラー発生:onCharging", e);
+                    }
+                }
+            });
+        }
+
+        private void onNotCharging(final Context context) {
+            Log.append(context, "通知:バッテリー動作開始");
+            mChargingState = ChargingState.NOT_CHARGING;
+            if (!Prefs.isActivated(context)) {
+                Log.append(context, "ガラパゴスマホの設定がOFFのため何もしませんでした");
+                return;
+            }
+
+            mHandler.post(new Runnable() {
+
+                @Override
+                public void run() {
+                    try {
+                        mResidentServiceState.onNotCharging();
+                    } catch (Throwable e) {
+                        Log.printStackTrace(context, "エラー発生:onNotCharging", e);
+                    }
+                }
+            });
+        }
+
+        private void onNetworkStateChanged(final Context context, Intent intent) {
+            Bundle extras = intent.getExtras();
+            if (extras == null) {
+                return;
+            }
+            NetworkInfo networkInfo = extras
+                    .getParcelable(WifiManager.EXTRA_NETWORK_INFO);
+            if (networkInfo == null) {
+                return;
+            }
+            if (!networkInfo.isConnected()) {
+                return;
+            }
+
+            Log.append(context, "通知:WiFi接続");
+            if (!Prefs.isActivated(context)) {
+                Log.append(context, "ガラパゴスマホの設定がOFFのため何もしませんでした");
+                return;
+            }
+            mHandler.post(new Runnable() {
+
+                @Override
+                public void run() {
+                    try {
+                        mResidentServiceState.onWifiConnected();
+                    } catch (Throwable e) {
+                        Log.printStackTrace(context, "エラー発生:onWifiConnected", e);
+                    }
+                }
+            });
+        }
+
+        private void onTimerExpired(final Context context) {
+            Log.append(context, "通知:タイマー満了");
+            if (!Prefs.isActivated(context)) {
+                Log.append(context, "ガラパゴスマホの設定がOFFのため何もしませんでした");
+                return;
+            }
+
+            mHandler.post(new Runnable() {
+
+                @Override
+                public void run() {
+                    try {
+                        mPendingIntent = null;
+                        mResidentServiceState.onTimerExpired();
+                    } catch (Throwable e) {
+                        Log.printStackTrace(context, "エラー発生:onTimerExpired", e);
+                    }
+                }
+            });
+
         }
     };
 
@@ -229,34 +291,37 @@ public class ResidentService extends Service {
         @Override
         public void onNotify(String message) {
             Context context = ResidentService.this;
-            Log.append(context, "通知:" + message);
 
-            if (!Prefs.getMainSetting(context) || message == null) {
+            if (message == null) {
                 return;
             }
 
             final Carrier carrier;
             if (message.equals("[未受信メール]") || message.equals("[未受信メールがあります]")) {
+                Log.append(context, "通知:" + message);
                 carrier = Carrier.DOCOMO;
             } else if (message.equals("[メール着信通知]")) {
+                Log.append(context, "通知:" + message);
                 carrier = Carrier.AU;
             } else if (message.startsWith("[SMS受信：")) {
+                Log.append(context, "通知:" + message);
                 carrier = Carrier.SOFTBANK;
             } else {
-                carrier = Carrier.UNKNOWN;
+                return;
             }
 
-            if (carrier != null) {
-                final Carrier carrierNotify = carrier;
-                mHandler.post(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        mResidentServiceState
-                                .onNotifyReceiveMail(carrierNotify);
-                    }
-                });
+            if (!Prefs.isActivated(context)) {
+                Log.append(context, "ガラパゴスマホの設定がOFFのため何もしませんでした");
+                return;
             }
+
+            mHandler.post(new Runnable() {
+
+                @Override
+                public void run() {
+                    mResidentServiceState.onNotifyReceiveMail(carrier);
+                }
+            });
         }
     };
 
@@ -274,7 +339,6 @@ public class ResidentService extends Service {
     private final Handler mHandler = new Handler();
     private PendingIntent mPendingIntent;
     private ConnectivityManager mConnectivityManager;
-    private static boolean mActiveFlag = false;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -286,21 +350,19 @@ public class ResidentService extends Service {
         super.onCreate();
         mDataConnectionState = DataConnectionState.ON;
         mConnectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
-        mResidentServiceState = new ResidentServiceScreenOn(this);
-        mResidentServiceState.start();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         final Context context = this;
-        if (mActiveFlag) {
-            Log.append(context, "OSによりサービスが再起動されました");
+        if (Prefs.getActiveFlag(context)) {
+            Log.append(context, "OSによるサービス再起動");
         } else {
-            Log.append(context, "サービスが開始されました");
+            Log.append(context, "サービスを開始しました");
             NotifyAreaController.putNotice(context, R.string.notify_startup,
                     R.string.notify_explanation);
         }
-        mActiveFlag = true;
+        Prefs.setActiveFlag(context, true);
         NotifyAreaController.setListener(mListener);
         registerReceiver(mBroadcastReceiver, new IntentFilter(
                 Intent.ACTION_SCREEN_ON));
@@ -313,6 +375,26 @@ public class ResidentService extends Service {
         registerReceiver(mBroadcastReceiver, new IntentFilter(
                 ACTION_TIMER_EXPIRED));
 
+        switch (Prefs.getServiceState(context)) {
+        case SCREEN_OFF_TETHERING:
+            mResidentServiceState = new ResidentServiceScreenOffTethering(this);
+            break;
+        case SCREEN_OFF_CHARGING:
+            mResidentServiceState = new ResidentServiceScreenOffCharging(this);
+            break;
+        case SCREEN_OFF_DATA_ON:
+            mResidentServiceState = new ResidentServiceScreenOffDataOn(this);
+            break;
+        case SCREEN_OFF_DATA_OFF:
+            mResidentServiceState = new ResidentServiceScreenOffDataOff(this);
+            break;
+        case SCREEN_ON:
+        default:
+            mResidentServiceState = new ResidentServiceScreenOn(this);
+            break;
+        }
+        mResidentServiceState.start();
+
         return START_STICKY;
     }
 
@@ -322,9 +404,18 @@ public class ResidentService extends Service {
         Context context = ResidentService.this;
         setOn();
         NotifyAreaController.removeNotice(this);
-        Log.append(context, "サービスが停止しました");
-        mActiveFlag = false;
+        Log.append(context, "サービス停止");
+        Prefs.setActiveFlag(context, false);
         unregisterReceiver(mBroadcastReceiver);
+        mResidentServiceState.end();
+    }
+
+    public void changeState(ResidentServiceState residentServiceState) {
+        Context context = this;
+        mResidentServiceState.end();
+        mResidentServiceState = residentServiceState;
+        Prefs.setServiceState(context, mResidentServiceState.getState());
+        mResidentServiceState.start();
     }
 
     public static boolean isServiceRunning(Context context) {
@@ -370,49 +461,46 @@ public class ResidentService extends Service {
         return ChargingState.NOT_CHARGING;
     }
 
-    public void changeState(ResidentServiceState residentServiceState) {
-        mResidentServiceState.end();
-        mResidentServiceState = residentServiceState;
-        mResidentServiceState.start();
-    }
-
     public ChargingState getChargingState() {
         return mChargingState;
     }
 
     public boolean setOn() {
-        boolean ret = false;
-        if (mDataConnectionState != DataConnectionState.ON) {
-            Log.setDevice(this, true);
-            Utils.set(this, true);
-            mDataConnectionState = DataConnectionState.ON;
-            ret = true;
+        if (mDataConnectionState == DataConnectionState.ON) {
+            return false;
         }
-        return ret;
+        Log.setDevice(this, true);
+        Utils.set(this, true);
+        mDataConnectionState = DataConnectionState.ON;
+        return true;
     }
 
     public boolean setOff() {
-        boolean ret = false;
-        if (mDataConnectionState != DataConnectionState.OFF) {
-            Log.setDevice(this, false);
-            Utils.set(this, false);
-            mDataConnectionState = DataConnectionState.OFF;
-            ret = true;
+        if (mDataConnectionState == DataConnectionState.OFF) {
+            return false;
         }
-        return ret;
+        Log.setDevice(this, false);
+        Utils.set(this, false);
+        mDataConnectionState = DataConnectionState.OFF;
+        return true;
     }
 
     public boolean isWifiConnected() {
         NetworkInfo networkInfo = mConnectivityManager.getActiveNetworkInfo();
 
-        if (networkInfo != null) {
-            if (networkInfo.isConnected()) {
-                if (networkInfo.getTypeName().equals("WIFI")) {
-                    return true;
-                }
-            }
+        if (networkInfo == null) {
+            return false;
         }
-        return false;
+
+        if (!networkInfo.isConnected()) {
+            return false;
+        }
+
+        if (!networkInfo.getTypeName().equals("WIFI")) {
+            return false;
+        }
+
+        return true;
     }
 
     public void startTimer(int time) {

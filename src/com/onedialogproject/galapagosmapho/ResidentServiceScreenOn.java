@@ -3,6 +3,7 @@ package com.onedialogproject.galapagosmapho;
 import com.onedialogproject.galapagosmapho.DebugTools.Pattern;
 import com.onedialogproject.galapagosmapho.ResidentService.Carrier;
 import com.onedialogproject.galapagosmapho.ResidentService.ChargingState;
+import com.onedialogproject.galapagosmapho.ResidentService.ServiceState;
 import com.onedialogproject.galapagosmapho.Utils.Device;
 
 public class ResidentServiceScreenOn extends
@@ -20,21 +21,26 @@ public class ResidentServiceScreenOn extends
             DebugTools.notify(mContext, Pattern.SCREEN_ON);
         }
 
+        Log.append(mContext, "ネットに接続しました");
         if (mResidentService.setOn()) {
             NotifyAreaController.putNotice(mContext, R.string.notify_connected,
                     R.string.notify_explanation);
         }
 
         if (Prefs.getWifiSetting(mContext)) {
-            if (mResidentService.getChargingState() == ChargingState.CHARGING) {
-                Log.append(mContext, "WiFiタイマー作動なし:充電中");
-            } else if (mResidentService.isWifiConnected()) {
-                Log.append(mContext, "WiFiタイマー作動なし:WiFi接続済み");
+            if (Utils.getWifiTetheringState(mContext)) {
+                Log.append(mContext, "WiFiタイマー作動なし:テザリング中");
             } else {
-                mResidentService.startTimer(WIFI_OFF_DURATION);
                 Utils.setDeviceState(mContext, Device.WIFI, true);
-                Log.append(mContext, "WiFiタイマー開始:OFFまで" + WIFI_OFF_DURATION
-                        + "秒");
+                if (mResidentService.getChargingState() == ChargingState.CHARGING) {
+                    Log.append(mContext, "WiFiタイマー作動なし:充電中");
+                } else if (mResidentService.isWifiConnected()) {
+                    Log.append(mContext, "WiFiタイマー作動なし:WiFi接続済み");
+                } else {
+                    mResidentService.startTimer(WIFI_OFF_DURATION);
+                    Log.append(mContext, "WiFiタイマー開始:OFFまで" + WIFI_OFF_DURATION
+                            + "秒");
+                }
             }
         }
     }
@@ -45,6 +51,11 @@ public class ResidentServiceScreenOn extends
     }
 
     @Override
+    public ServiceState getState() {
+        return ServiceState.SCREEN_ON;
+    }
+
+    @Override
     public void onScreenOn() {
         // Fail safe
         Utils.set(mContext, true);
@@ -52,7 +63,10 @@ public class ResidentServiceScreenOn extends
 
     @Override
     public void onScreenOff() {
-        if (mResidentService.getChargingState() == ChargingState.CHARGING) {
+        if (Utils.getWifiTetheringState(mContext)) {
+            mResidentService.changeState(new ResidentServiceScreenOffTethering(
+                    mResidentService));
+        } else if (mResidentService.getChargingState() == ChargingState.CHARGING) {
             mResidentService.changeState(new ResidentServiceScreenOffCharging(
                     mResidentService));
         } else {
@@ -93,7 +107,7 @@ public class ResidentServiceScreenOn extends
     public void onTimerExpired() {
         if (Prefs.getWifiSetting(mContext)
                 && !mResidentService.isWifiConnected()) {
-            Log.append(mContext, "WiFiタイマー満了:Wi-FiをOFFにしました");
+            Log.append(mContext, "Wi-FiをOFFに設定");
             Utils.setDeviceState(mContext, Device.WIFI, false);
         }
     }
@@ -101,7 +115,7 @@ public class ResidentServiceScreenOn extends
     @Override
     public void onWifiConnected() {
         if (Prefs.getWifiSetting(mContext)) {
-            Log.append(mContext, "WiFiタイマー停止:WiFi接続を検知");
+            Log.append(mContext, "WiFiタイマー停止");
             mResidentService.cancelTimer();
         }
     }

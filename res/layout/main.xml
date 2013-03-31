@@ -26,33 +26,32 @@
 				android:layout_weight="1"
 				android:text="@string/text_main_setting" />
 
-			<RadioGroup
-				android:id="@+id/radiogroup_main_setting"
-				android:layout_width="wrap_content"
+			<LinearLayout
+				android:layout_width="fill_parent"
 				android:layout_height="wrap_content"
 				android:orientation="horizontal" >
 
-				<RadioButton
-					android:id="@+id/radiobutton_none"
+				<CheckBox
+					android:id="@+id/checkBox_lte_3g"
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
-					android:text="@string/radiobutton_none" >
-				</RadioButton>
+					android:layout_weight="1"
+					android:text="@string/checkbox_3g_lte" />
 
-				<RadioButton
-					android:id="@+id/radiobutton_3g_lte"
+				<CheckBox
+					android:id="@+id/checkBox_wifi"
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
-					android:text="@string/radiobutton_3g_lte" >
-				</RadioButton>
+					android:layout_weight="1"
+					android:text="@string/checkbox_wifi" />
 
-				<RadioButton
-					android:id="@+id/radiobutton_3g_lte_wifi"
+				<CheckBox
+					android:id="@+id/checkBox_bluetooth"
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
-					android:text="@string/radiobutton_3g_lte_wifi" >
-				</RadioButton>
-			</RadioGroup>
+					android:layout_weight="1"
+					android:text="@string/checkbox_bluetooth" />
+			</LinearLayout>
 
 			<TextView
 				android:layout_width="fill_parent"
@@ -101,7 +100,6 @@
 				android:layout_width="fill_parent"
 				android:layout_height="wrap_content"
 				android:text="@string/text_debug_mode_explanation" />
-
 		</LinearLayout>
 	</ScrollView>
 

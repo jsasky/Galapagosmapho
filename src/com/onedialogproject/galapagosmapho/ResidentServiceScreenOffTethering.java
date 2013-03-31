@@ -4,19 +4,19 @@ import com.onedialogproject.galapagosmapho.DebugTools.Pattern;
 import com.onedialogproject.galapagosmapho.ResidentService.Carrier;
 import com.onedialogproject.galapagosmapho.ResidentService.ServiceState;
 
-public class ResidentServiceScreenOffDataOff extends
+public class ResidentServiceScreenOffTethering extends
         ResidentService.ResidentServiceState {
 
-    public ResidentServiceScreenOffDataOff(ResidentService residentService) {
+    public ResidentServiceScreenOffTethering(ResidentService residentService) {
         super(residentService);
     }
 
     @Override
     public void start() {
-        Log.append(mContext, "ネットを切断しました");
-        mResidentService.setOff();
+        Log.append(mContext, "テザリング中のためネット接続中");
+        mResidentService.setOn();
         if (Prefs.getDebugMode(mContext)) {
-            DebugTools.notify(mContext, Pattern.DATA_OFF);
+            DebugTools.notify(mContext, Pattern.CHARGING);
         }
     }
 
@@ -27,7 +27,7 @@ public class ResidentServiceScreenOffDataOff extends
 
     @Override
     public ServiceState getState() {
-        return ServiceState.SCREEN_OFF_DATA_OFF;
+        return ServiceState.SCREEN_OFF_TETHERING;
     }
 
     @Override

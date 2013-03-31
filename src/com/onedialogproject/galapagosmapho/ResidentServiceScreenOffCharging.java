@@ -2,6 +2,7 @@ package com.onedialogproject.galapagosmapho;
 
 import com.onedialogproject.galapagosmapho.DebugTools.Pattern;
 import com.onedialogproject.galapagosmapho.ResidentService.Carrier;
+import com.onedialogproject.galapagosmapho.ResidentService.ServiceState;
 
 public class ResidentServiceScreenOffCharging extends
         ResidentService.ResidentServiceState {
@@ -22,6 +23,11 @@ public class ResidentServiceScreenOffCharging extends
     @Override
     public void end() {
         // Do nothing
+    }
+
+    @Override
+    public ServiceState getState() {
+        return ServiceState.SCREEN_OFF_CHARGING;
     }
 
     @Override

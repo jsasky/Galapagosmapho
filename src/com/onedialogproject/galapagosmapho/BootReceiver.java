@@ -8,11 +8,16 @@ public class BootReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
+        if ((context == null) || (intent == null)) {
+            return;
+        }
+
         String action = intent.getAction();
-        if (action.equals(Intent.ACTION_BOOT_COMPLETED)) {
+        if ((action != null) && Intent.ACTION_BOOT_COMPLETED.equals(action)) {
             Log.append(context, "端末再起動");
-            if (Prefs.getMainSetting(context)
+            if (Prefs.isActivated(context)
                     && !ResidentService.isServiceRunning(context)) {
+                Prefs.setActiveFlag(context, false);
                 context.startService(new Intent(context, ResidentService.class));
             }
         }

@@ -9,13 +9,13 @@
 	<string name="button_no">いいえ</string>
 	<string name="message_clear_log">ログをクリアします。\nよろしいですか？</string>
 	<string name="button_update_log">更新</string>
-	<string name="text_main_setting">画面ON/OFFに連動させる通信種別を選択</string>
-	<string name="radiobutton_none">なし</string>
-	<string name="radiobutton_3g_lte">3G</string>
-	<string name="radiobutton_3g_lte_wifi">3G+Wi-Fi</string>
-	<string name="text_main_setting_explanation">画面OFF時にインターネットを切断して、待ち受け中のバッテリー消費を抑えます。インターネット切断中でも電話とキャリアメールの着信は通知されます。</string>
+	<string name="text_main_setting">画面ON/OFFに連動させる無線デバイスを選択</string>
+	<string name="checkbox_3g_lte">3G/LTE</string>
+	<string name="checkbox_wifi">Wi-Fi</string>
+	<string name="checkbox_bluetooth">Bluetooth</string>
+	<string name="text_main_setting_explanation">画面OFF時に無線デバイスをOFFにして、待ち受け中のバッテリー消費を抑えます。無線デバイスがOFFでも電話とキャリアメールの着信は通知されます。</string>
 	<string name="text_mail">タップすると設定アプリの[ユーザー補助]画面が表示されます。この画面で「ガラパゴスマホ」をタップし、表示された画面でON/OFFしてください。</string>
-	<string name="checkbox_text_mail_notification">spモードメール着信時に通知する</string>
+	<string name="checkbox_text_mail_notification">spモードメール着信時に通知する\n※au/SoftBankは常に通知されます</string>
 	<string name="startup_message_test">spモードメール着信通知動作確認中...</string>
 	<string name="startup_message_success">spモードメール着信通知がONになりました</string>
 	<string name="startup_message_failed">spモードメール着信通知をONにできませんでした</string>
@@ -24,7 +24,7 @@
 	<string name="checkbox_text_debug_mode">動作確認モード</string>
 	<string name="text_debug_mode_explanation">チェックを入れると、画面OFF中にネット接続状態が変わる度にバイブレーターが動作し、ネット接続状態のときにはLEDが点灯します。\nネット接続のON/OFFサイクルが1分になります。</string>
 	<string name="notify_startup">ガラパゴスマホを有効にしました</string>
-	<string name="notify_connected">ネット接続をONにしました</string>
+	<string name="notify_connected">インターネット接続をONにしました</string>
 	<string name="notify_explanation">画面OFFでネット接続が切断されます</string>
 
 </resources>

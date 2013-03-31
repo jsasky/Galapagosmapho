@@ -47,7 +47,7 @@ public class NotifyAreaController extends AccessibilityService {
             @Override
             public void run() {
 
-                if (Prefs.getMainSetting(context)) {
+                if (Prefs.isActivated(context)) {
                     Toast.makeText(context, R.string.startup_message_test,
                             Toast.LENGTH_SHORT).show();
                 }
@@ -56,7 +56,7 @@ public class NotifyAreaController extends AccessibilityService {
 
                     @Override
                     public void run() {
-                        if (!mNotifyCheckFlag && Prefs.getMainSetting(context)) {
+                        if (!mNotifyCheckFlag && Prefs.isActivated(context)) {
                             Toast.makeText(context,
                                     R.string.startup_message_failed,
                                     Toast.LENGTH_SHORT).show();
@@ -81,7 +81,7 @@ public class NotifyAreaController extends AccessibilityService {
         case AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED:
             mConfirmed = true;
             if (!mNotifyCheckFlag) {
-                if (Prefs.getMainSetting(context)) {
+                if (Prefs.isActivated(context)) {
                     Toast.makeText(context, R.string.startup_message_success,
                             Toast.LENGTH_SHORT).show();
                 }
@@ -89,7 +89,7 @@ public class NotifyAreaController extends AccessibilityService {
             }
 
             String message = String.valueOf(event.getText());
-            if (message == null || message.trim().equals("")
+            if ((message == null) || message.trim().equals("")
                     || message.trim().equals("[]")) {
                 return;
             }
